@@ -8,7 +8,7 @@
 - Diretório raiz: `./`
 - Comando de construção: `npm run build`
 - Gerenciador de pacotes: `npm`
-- Diretório de saída: `apps/web/dist`
+- Diretório de saída: `dist`
 - Arquivo de entrada: `server.js`
 
 ## Banco de dados

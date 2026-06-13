@@ -1,12 +1,16 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { extname, join, normalize } from 'node:path';
+import { dirname, extname, join, normalize } from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 import mysql from 'mysql2/promise';
 
 const port = Number(process.env.PORT) || 3000;
-const root = join(process.cwd(), 'apps', 'web', 'dist');
+const appDirectory = dirname(fileURLToPath(import.meta.url));
+const deployedFrontend = join(appDirectory, 'public');
+const localFrontend = join(appDirectory, 'apps', 'web', 'dist');
+const root = existsSync(deployedFrontend) ? deployedFrontend : localFrontend;
 const sessionSecret = process.env.SESSION_SECRET || 'troque-esta-chave-em-producao';
 const adminEmail = process.env.ADMIN_EMAIL || 'admin@bolao.local';
 const adminPassword = process.env.ADMIN_PASSWORD || 'bolao-local-2026';
@@ -285,7 +289,16 @@ const serveFrontend = (request, response, url) => {
   createReadStream(filePath).on('error', () => sendJson(response, 500, { message: 'Não foi possível carregar a aplicação' })).pipe(response);
 };
 
-await initializeDatabase();
+console.log(`Iniciando aplicação na porta ${port}`);
+console.log(`Servindo frontend de ${root}`);
+
+try {
+  await initializeDatabase();
+  console.log(`Banco de dados ${useMemoryDatabase ? 'em memória' : 'MySQL'} inicializado`);
+} catch (error) {
+  console.error('Falha ao inicializar o banco de dados:', error);
+  throw error;
+}
 
 createServer(async (request, response) => {
   try {
