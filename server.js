@@ -6,6 +6,9 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import mysql from 'mysql2/promise';
 
+process.on('uncaughtException', (error) => console.error('Exceção não tratada:', error));
+process.on('unhandledRejection', (error) => console.error('Rejeição não tratada:', error));
+
 const port = Number(process.env.PORT) || 3000;
 const appDirectory = dirname(fileURLToPath(import.meta.url));
 const deployedFrontend = join(appDirectory, 'public');
@@ -15,14 +18,12 @@ const sessionSecret = process.env.SESSION_SECRET || 'troque-esta-chave-em-produc
 const adminEmail = process.env.ADMIN_EMAIL || 'admin@bolao.local';
 const adminPassword = process.env.ADMIN_PASSWORD || 'bolao-local-2026';
 const useMemoryDatabase = process.env.USE_MEMORY_DB === 'true';
-
-if (!useMemoryDatabase) {
-  const requiredVariables = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'ADMIN_EMAIL', 'ADMIN_PASSWORD', 'SESSION_SECRET'];
-  const missingVariables = requiredVariables.filter((variable) => !process.env[variable]);
-  if (missingVariables.length) {
-    throw new Error(`Configure as variáveis de ambiente obrigatórias: ${missingVariables.join(', ')}`);
-  }
-}
+let databaseReady = useMemoryDatabase;
+let databaseError = null;
+const requiredDatabaseVariables = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
+const missingDatabaseVariables = useMemoryDatabase
+  ? []
+  : requiredDatabaseVariables.filter((variable) => !process.env[variable]);
 
 const pool = useMemoryDatabase ? null : mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
@@ -30,6 +31,7 @@ const pool = useMemoryDatabase ? null : mysql.createPool({
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'bolao',
+  connectTimeout: 10000,
   waitForConnections: true,
   connectionLimit: 5,
   charset: 'utf8mb4',
@@ -155,8 +157,15 @@ const requireAdmin = (request, response) => {
 };
 
 const initializeDatabase = async () => {
-  if (useMemoryDatabase) return;
+  if (useMemoryDatabase) {
+    databaseReady = true;
+    return;
+  }
+  if (missingDatabaseVariables.length) {
+    throw new Error(`Variáveis do banco ausentes: ${missingDatabaseVariables.join(', ')}`);
+  }
   for (const schema of schemas) await pool.query(schema);
+  databaseReady = true;
 };
 
 const listRecords = async (table, sort = 'created') => {
@@ -224,9 +233,14 @@ const updateRecord = async (table, recordId, data) => {
 
 const apiHandler = async (request, response, url) => {
   if (request.method === 'GET' && url.pathname === '/api/health') {
-    if (!useMemoryDatabase) await pool.query('SELECT 1');
-    return sendJson(response, 200, { message: 'API disponível', database: useMemoryDatabase ? 'memory' : 'mysql' });
+    return sendJson(response, databaseReady ? 200 : 503, {
+      message: 'API disponível',
+      database: databaseReady ? (useMemoryDatabase ? 'memory' : 'mysql') : 'indisponível',
+      error: databaseError?.message,
+    });
   }
+
+  if (!databaseReady) return sendJson(response, 503, { message: 'Banco de dados temporariamente indisponível' });
 
   if (request.method === 'POST' && url.pathname === '/api/auth/login') {
     const body = await readJson(request);
@@ -289,17 +303,6 @@ const serveFrontend = (request, response, url) => {
   createReadStream(filePath).on('error', () => sendJson(response, 500, { message: 'Não foi possível carregar a aplicação' })).pipe(response);
 };
 
-console.log(`Iniciando aplicação na porta ${port}`);
-console.log(`Servindo frontend de ${root}`);
-
-try {
-  await initializeDatabase();
-  console.log(`Banco de dados ${useMemoryDatabase ? 'em memória' : 'MySQL'} inicializado`);
-} catch (error) {
-  console.error('Falha ao inicializar o banco de dados:', error);
-  throw error;
-}
-
 createServer(async (request, response) => {
   try {
     const url = new URL(request.url, 'http://localhost');
@@ -315,4 +318,12 @@ createServer(async (request, response) => {
   }
 }).listen(port, '0.0.0.0', () => {
   console.log(`Aplicação disponível na porta ${port}`);
+  console.log(`Servindo frontend de ${root}`);
+
+  initializeDatabase()
+    .then(() => console.log(`Banco de dados ${useMemoryDatabase ? 'em memória' : 'MySQL'} inicializado`))
+    .catch((error) => {
+      databaseError = error;
+      console.error('Falha ao inicializar o banco de dados:', error);
+    });
 });
