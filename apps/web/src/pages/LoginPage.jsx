@@ -32,7 +32,7 @@ const LoginPage = () => {
       toast.error(
         error?.status === 400
           ? 'Email ou senha incorretos'
-          : 'Não foi possível conectar ao servidor. Verifique se o PocketBase está rodando.'
+          : 'Não foi possível conectar ao servidor. Tente novamente em instantes.'
       );
     } finally {
       setLoading(false);
