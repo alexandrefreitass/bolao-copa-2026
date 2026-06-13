@@ -295,9 +295,10 @@ export default defineConfig({
 	],
 	server: {
 		port: 3000,
+		strictPort: true,
 		cors: true,
 		proxy: {
-			'/api': 'http://localhost:3001',
+			'/api': 'http://127.0.0.1:3001',
 		},
 		headers: {
 			'Cross-Origin-Embedder-Policy': 'credentialless',

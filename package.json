@@ -1,9 +1,11 @@
 {
   "name": "monorepo",
+  "type": "module",
   "version": "0.0.0",
   "private": true,
   "scripts": {
     "dev": "concurrently --kill-others --raw \"npm run dev --prefix apps/web\" \"node dev-server.js\"",
+    "stop": "node scripts/stop-dev.mjs",
     "build": "npm run build --prefix apps/web",
     "start": "node server.js",
     "lint": "concurrently --raw \"npm run lint --prefix apps/web\""
