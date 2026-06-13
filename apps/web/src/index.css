@@ -1,0 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: 151 72% 20%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 46 100% 56%;
+    --secondary-foreground: 0 0% 0%;
+    --accent: 218 78% 50%;
+    --accent-foreground: 0 0% 100%;
+    --background: 150 25% 97%;
+    --foreground: 158 38% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 40% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 40% 12%;
+    --muted: 150 20% 94%;
+    --muted-foreground: 158 12% 42%;
+    --border: 150 18% 87%;
+    --input: 150 18% 84%;
+    --ring: 151 72% 28%;
+    --success: 151 72% 28%;
+    --warning: 36 100% 50%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --radius: 1.1rem;
+    
+    /* Brazil Theme Tokens */
+    --brasil-green: 151 72% 20%;
+    --brasil-yellow: 46 100% 56%;
+    --brasil-blue: 218 78% 50%;
+    --brasil-dark: 0 0% 8%;
+    --brasil-light: 0 0% 98%;
+  }
+
+  .dark {
+    --primary: 88 65% 24%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 45 100% 51%;
+    --secondary-foreground: 0 0% 0%;
+    --accent: 207 76% 42%;
+    --accent-foreground: 0 0% 100%;
+    --background: 210 40% 12%;
+    --foreground: 0 0% 98%;
+    --card: 210 40% 15%;
+    --card-foreground: 0 0% 98%;
+    --popover: 210 40% 15%;
+    --popover-foreground: 0 0% 98%;
+    --muted: 210 40% 20%;
+    --muted-foreground: 215 20% 65%;
+    --border: 210 40% 25%;
+    --input: 210 40% 25%;
+    --ring: 88 65% 24%;
+    --success: 88 65% 24%;
+    --warning: 36 100% 50%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Brazil Theme Tokens */
+    --brasil-green: 122 55% 24%;
+    --brasil-yellow: 45 100% 51%;
+    --brasil-blue: 212 80% 42%;
+    --brasil-dark: 0 0% 8%;
+    --brasil-light: 0 0% 98%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    font-family: "DM Sans", sans-serif;
+    background:
+      radial-gradient(circle at 0% 0%, hsl(var(--brasil-yellow) / 0.1), transparent 28rem),
+      radial-gradient(circle at 100% 8%, hsl(var(--brasil-blue) / 0.08), transparent 32rem),
+      hsl(var(--background));
+    color: hsl(var(--foreground));
+    overflow-x: clip;
+    line-height: 1.625;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Manrope", "DM Sans", sans-serif;
+    text-wrap: balance;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background: hsl(var(--brasil-yellow));
+    color: hsl(var(--brasil-dark));
+  }
+
+  button, a, input {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+  }
+
+  h2 {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  @media (min-width: 768px) {
+    h1 {
+      font-size: 3.5rem;
+    }
+    h2 {
+      font-size: 2.5rem;
+    }
+    h3 {
+      font-size: 1.875rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    h1 {
+      font-size: 4rem;
+    }
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .transition-smooth {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+
+  .app-shell {
+    min-height: 100vh;
+    background-image: linear-gradient(hsl(var(--brasil-green) / 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--brasil-green) / 0.025) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .glass-card {
+    border: 1px solid hsl(0 0% 100% / 0.7);
+    background: hsl(0 0% 100% / 0.82);
+    box-shadow: 0 18px 55px hsl(var(--brasil-green) / 0.1);
+    backdrop-filter: blur(16px);
+  }
+
+  .section-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid hsl(var(--brasil-green) / 0.14);
+    border-radius: 999px;
+    background: hsl(var(--brasil-green) / 0.07);
+    padding: 0.4rem 0.75rem;
+    color: hsl(var(--brasil-green));
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .soft-panel {
+    border: 1px solid hsl(var(--border));
+    border-radius: 1rem;
+    background: hsl(var(--muted) / 0.65);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
