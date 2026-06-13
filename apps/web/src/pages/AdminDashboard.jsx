@@ -313,7 +313,7 @@ const AdminDashboard = () => {
                           {format(new Date(aposta.created), 'dd/MM/yyyy HH:mm')}
                         </TableCell>
                         <TableCell className="font-medium">{aposta.nome}</TableCell>
-                        <TableCell>{aposta.telefone}</TableCell>
+                        <TableCell>{aposta.telefone || 'Não informado'}</TableCell>
                         <TableCell className="font-semibold text-[hsl(var(--brasil-blue))]">
                           Brasil {aposta.placar.split('x')[0]?.trim()} x {aposta.placar.split('x')[1]?.trim()} Marrocos
                         </TableCell>

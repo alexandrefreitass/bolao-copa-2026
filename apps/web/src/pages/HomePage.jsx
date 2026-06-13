@@ -31,6 +31,18 @@ const HomePage = () => {
   });
   const [brasilScore, setBrasilScore] = useState('');
   const [marrocosScore, setMarrocosScore] = useState('');
+  const pixKey = '60.502.717/0001-63';
+
+  const copyPixKey = async () => {
+    try {
+      await navigator.clipboard.writeText(pixKey);
+      setPixCopied(true);
+      toast.success('Chave PIX copiada');
+    } catch (error) {
+      console.error('Unable to copy PIX key:', error);
+      toast.error('Não foi possível copiar. Selecione a chave manualmente.');
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -52,37 +64,12 @@ const HomePage = () => {
     }
   };
 
-  const validatePhone = (phone) => {
-    const phoneRegex = /^\(\d{2}\)\s\d{5}-\d{4}$/;
-    return phoneRegex.test(phone);
-  };
-
-  const formatPhone = (value) => {
-    const digits = value.replace(/\D/g, '').slice(0, 11);
-
-    if (digits.length <= 2) {
-      return digits ? `(${digits}` : '';
-    }
-
-    if (digits.length <= 7) {
-      return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    }
-
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  };
-
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     setSubmitting(true);
 
     if (!formData.nome.trim()) {
       toast.error('Nome é obrigatório');
-      setSubmitting(false);
-      return;
-    }
-
-    if (!validatePhone(formData.telefone)) {
-      toast.error('Telefone inválido. Use o formato (XX) XXXXX-XXXX');
       setSubmitting(false);
       return;
     }
@@ -96,9 +83,10 @@ const HomePage = () => {
     const placarFormatado = `${brasilScore} x ${marrocosScore}`;
 
     const normalizedName = formData.nome.trim().toLowerCase();
+    const normalizedPhone = formData.telefone.trim();
     const existingBets = apostas.filter((aposta) =>
       aposta.nome.trim().toLowerCase() === normalizedName ||
-      aposta.telefone === formData.telefone
+      (normalizedPhone && aposta.telefone === normalizedPhone)
     );
 
     if (existingBets.length > 0) {
@@ -339,16 +327,13 @@ const HomePage = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="telefone">Telefone</Label>
+                    <Label htmlFor="telefone">Telefone <span className="text-muted-foreground">(opcional)</span></Label>
                     <Input
                       id="telefone"
                       type="text"
                       placeholder="(XX) XXXXX-XXXX"
                       value={formData.telefone}
-                      onChange={(e) => setFormData({ ...formData, telefone: formatPhone(e.target.value) })}
-                      inputMode="numeric"
-                      maxLength={15}
-                      required
+                      onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
                       className="text-foreground"
                     />
                   </div>
@@ -366,6 +351,25 @@ const HomePage = () => {
                   />
                 </div>
               </form>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-12 overflow-hidden border-primary/15 bg-primary/[0.035]">
+            <CardContent className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+              <div className="flex min-w-0 items-start gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-white">
+                  <Copy className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">PIX copia e cola</p>
+                  <p className="mt-1 break-all font-[Manrope] text-xl font-extrabold text-foreground">{pixKey}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Pague R$ 10,00 e envie o comprovante pelo WhatsApp da Mari.</p>
+                </div>
+              </div>
+              <Button type="button" onClick={copyPixKey} className="w-full shrink-0 sm:w-auto">
+                {pixCopied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {pixCopied ? 'Chave copiada' : 'Copiar chave PIX'}
+              </Button>
             </CardContent>
           </Card>
 
@@ -545,7 +549,7 @@ const HomePage = () => {
           </DialogHeader>
           <div className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-4">
             <p className="mb-1 text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">Chave PIX</p>
-            <p className="break-all font-[Manrope] text-lg font-extrabold text-foreground">60.502.717/0001-63</p>
+            <p className="break-all font-[Manrope] text-lg font-extrabold text-foreground">{pixKey}</p>
           </div>
           <div className="flex gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
@@ -561,16 +565,7 @@ const HomePage = () => {
           <DialogFooter className="mt-2 gap-2 sm:space-x-0">
             <Button variant="outline" onClick={() => setPixModalOpen(false)}>Fechar</Button>
             <Button
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText('60.502.717/0001-63');
-                  setPixCopied(true);
-                  toast.success('Chave PIX copiada');
-                } catch (error) {
-                  console.error('Unable to copy PIX key:', error);
-                  toast.error('Não foi possível copiar. Selecione a chave manualmente.');
-                }
-              }}
+              onClick={copyPixKey}
             >
               {pixCopied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {pixCopied ? 'Chave copiada' : 'Copiar chave PIX'}

@@ -191,6 +191,7 @@ const createRecord = async (table, data) => {
   const safeData = Object.fromEntries(
     allowedFields[table].filter((field) => data[field] !== undefined).map((field) => [field, data[field]]),
   );
+  if (table === 'apostas' && safeData.telefone === undefined) safeData.telefone = '';
   const record = { id: id(), ...safeData, created: now(), updated: now() };
   if (table === 'configuracao_bolao') record.vencedores = JSON.stringify(record.vencedores || []);
   if (useMemoryDatabase) {
