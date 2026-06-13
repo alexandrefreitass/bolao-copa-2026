@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Trophy, DollarSign, Users, MoreVertical, TrendingUp, Sparkles, ShieldCheck, Medal, Copy, CheckCircle2, MessageCircle } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import Header from '@/components/Header.jsx';
 import Footer from '@/components/Footer.jsx';
 import ScoreSelectorComponent from '@/components/ScoreSelectorComponent.jsx';
@@ -25,6 +25,7 @@ const HomePage = () => {
   const [duplicateConfirmation, setDuplicateConfirmation] = useState(null);
   const [pixModalOpen, setPixModalOpen] = useState(false);
   const [pixCopied, setPixCopied] = useState(false);
+  const [compactChart, setCompactChart] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
     telefone: ''
@@ -56,6 +57,16 @@ const HomePage = () => {
 
   useEffect(() => {
     fetchData();
+    const refreshInterval = window.setInterval(fetchData, 30000);
+    const chartQuery = window.matchMedia('(max-width: 445px)');
+    const updateChartMode = () => setCompactChart(chartQuery.matches);
+    updateChartMode();
+    chartQuery.addEventListener('change', updateChartMode);
+
+    return () => {
+      window.clearInterval(refreshInterval);
+      chartQuery.removeEventListener('change', updateChartMode);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -189,7 +200,8 @@ const HomePage = () => {
 
   const chartData = groupedArray.slice(0, 5).map(item => ({
     name: item.score,
-    value: item.count
+    value: item.count,
+    percentage: apostas.length > 0 ? Math.round((item.count / apostas.length) * 100) : 0,
   }));
 
   const COLORS = ['hsl(var(--brasil-green))', 'hsl(var(--brasil-yellow))', 'hsl(var(--brasil-blue))', '#FF6F00', '#7B1FA2'];
@@ -470,26 +482,38 @@ const HomePage = () => {
               </CardHeader>
               <CardContent>
                 {chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={chartData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value, name) => [value, `Brasil ${name.split('x')[0].trim()} x ${name.split('x')[1]?.trim()} Marrocos`]} />
-                      <Legend formatter={(value) => `Brasil ${value.split('x')[0].trim()} x ${value.split('x')[1]?.trim()} Marrocos`} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <>
+                    <ResponsiveContainer width="100%" height={compactChart ? 190 : 230}>
+                      <PieChart>
+                        <Pie
+                          data={chartData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={!compactChart}
+                          label={compactChart ? false : ({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                          outerRadius={compactChart ? 72 : 82}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {chartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value, name) => [value, `Brasil ${name.split('x')[0].trim()} x ${name.split('x')[1]?.trim()} Marrocos`]} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                      {chartData.map((item, index) => (
+                        <div key={item.name} className="flex min-w-0 items-center gap-2">
+                          <span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                          <span className="min-w-0 flex-1 truncate">
+                            Brasil {item.name.split('x')[0].trim()} x {item.name.split('x')[1]?.trim()} Marrocos
+                          </span>
+                          <span className="shrink-0 font-bold text-foreground">{item.percentage}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <div className="h-[300px] flex items-center justify-center">
                     <p className="text-muted-foreground">Sem dados para exibir.</p>
