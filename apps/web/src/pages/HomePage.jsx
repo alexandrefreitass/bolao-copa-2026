@@ -222,7 +222,7 @@ const HomePage = () => {
         <section 
           className="relative isolate overflow-hidden bg-cover bg-center py-20 md:py-28"
           style={{
-            backgroundImage: 'url(https://images.unsplash.com/photo-1703540918559-2ac64d38b6c8)',
+            backgroundImage: 'url(/og-image.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
