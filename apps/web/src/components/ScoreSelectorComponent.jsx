@@ -34,7 +34,7 @@ const ScoreControl = ({ label, abbreviation, score, onChange, disabled, team }) 
         </span>
       </div>
 
-      <div className="grid grid-cols-[28px_46px_28px] items-center justify-center gap-1 sm:grid-cols-[44px_76px_44px] sm:gap-2.5">
+      <div className="flex items-center justify-center gap-1.5 sm:gap-2.5">
         <Button
           type="button"
           variant="outline"
