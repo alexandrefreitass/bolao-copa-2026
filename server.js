@@ -24,9 +24,10 @@ const requiredDatabaseVariables = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD
 const missingDatabaseVariables = useMemoryDatabase
   ? []
   : requiredDatabaseVariables.filter((variable) => !process.env[variable]);
+const databaseHost = process.env.DB_HOST === 'localhost' ? '127.0.0.1' : process.env.DB_HOST;
 
 const pool = useMemoryDatabase ? null : mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
+  host: databaseHost || '127.0.0.1',
   port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
