@@ -44,6 +44,16 @@ const HomePage = () => {
     }
   };
 
+  const formatPhone = (value) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 2) return digits ? `(${digits}` : '';
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
+  const phoneDigits = formData.telefone.replace(/\D/g, '');
+  const showPhoneHint = phoneDigits.length > 0 && phoneDigits.length < 11;
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -333,9 +343,17 @@ const HomePage = () => {
                       type="text"
                       placeholder="(XX) XXXXX-XXXX"
                       value={formData.telefone}
-                      onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                      className="text-foreground"
+                      onChange={(e) => setFormData({ ...formData, telefone: formatPhone(e.target.value) })}
+                      inputMode="numeric"
+                      maxLength={15}
+                      aria-describedby={showPhoneHint ? 'telefone-aviso' : undefined}
+                      className={showPhoneHint ? 'border-amber-300 text-foreground focus-visible:ring-amber-200' : 'text-foreground'}
                     />
+                    {showPhoneHint && (
+                      <p id="telefone-aviso" className="text-xs text-amber-700">
+                        Confira o número. O formato esperado é (XX) XXXXX-XXXX.
+                      </p>
+                    )}
                   </div>
                 </div>
                 
@@ -389,7 +407,7 @@ const HomePage = () => {
                       <p className="text-sm font-medium text-[hsl(var(--brasil-blue))]">Brasil {aposta.placar.split('x')[0].trim()} x {aposta.placar.split('x')[1]?.trim()} Marrocos</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <Badge variant={aposta.status === 'pago' ? 'default' : 'secondary'} className={aposta.status === 'pago' ? 'bg-success text-success-foreground hover:bg-success/90' : 'border border-amber-300/70 bg-amber-100 text-amber-800 hover:bg-amber-200'}>
+                      <Badge variant="secondary" className={aposta.status === 'pago' ? 'border border-emerald-300/70 bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'border border-amber-300/70 bg-amber-100 text-amber-800 hover:bg-amber-200'}>
                         {aposta.status}
                       </Badge>
                       <span className="font-semibold text-primary">R$ {(aposta.valor || 10).toFixed(2)}</span>

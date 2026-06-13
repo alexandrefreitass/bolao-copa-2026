@@ -319,8 +319,8 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell>
                           <Badge 
-                            variant={aposta.status === 'pago' ? 'default' : 'secondary'}
-                            className={`cursor-pointer ${aposta.status === 'pago' ? 'bg-success text-success-foreground hover:bg-success/90' : 'border border-amber-300/70 bg-amber-100 text-amber-800 hover:bg-amber-200'}`}
+                            variant="secondary"
+                            className={`cursor-pointer ${aposta.status === 'pago' ? 'border border-emerald-300/70 bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'border border-amber-300/70 bg-amber-100 text-amber-800 hover:bg-amber-200'}`}
                             onClick={() => handleToggleStatus(aposta)}
                           >
                             {aposta.status}
