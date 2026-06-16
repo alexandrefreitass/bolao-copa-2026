@@ -76,7 +76,17 @@ const ScoreControl = ({ label, abbreviation, score, onChange, disabled, team }) 
   );
 };
 
-const ScoreSelectorComponent = ({ brasilScore, marrocosScore, onBrasilChange, onMarrocosChange, onSubmit, disabled }) => {
+const ScoreSelectorComponent = ({
+  brasilScore,
+  marrocosScore,
+  onBrasilChange,
+  onMarrocosChange,
+  onSubmit,
+  disabled,
+  readOnly = false,
+  submitLabel = 'Confirmar placar',
+}) => {
+  const controlsDisabled = disabled || readOnly;
   const isSubmitDisabled = disabled || brasilScore === '' || marrocosScore === '';
 
   return (
@@ -88,7 +98,7 @@ const ScoreSelectorComponent = ({ brasilScore, marrocosScore, onBrasilChange, on
           team="brazil"
           score={brasilScore}
           onChange={onBrasilChange}
-          disabled={disabled}
+          disabled={controlsDisabled}
         />
 
         <div className="mx-auto mb-1.5 flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-white bg-foreground font-[Manrope] text-[9px] font-extrabold uppercase tracking-wider text-white shadow-[0_8px_20px_hsl(var(--foreground)/0.18)] sm:mb-0 sm:h-14 sm:w-14 sm:border-4 sm:text-xs">
@@ -101,7 +111,7 @@ const ScoreSelectorComponent = ({ brasilScore, marrocosScore, onBrasilChange, on
           team="morocco"
           score={marrocosScore}
           onChange={onMarrocosChange}
-          disabled={disabled}
+          disabled={controlsDisabled}
         />
       </div>
 
@@ -109,7 +119,7 @@ const ScoreSelectorComponent = ({ brasilScore, marrocosScore, onBrasilChange, on
         <div className="mt-7 flex justify-center border-t border-border/70 pt-5 sm:mt-8 sm:pt-6">
           <Button onClick={onSubmit} disabled={isSubmitDisabled} size="lg" className="w-full sm:w-64">
             <Check className="h-4 w-4" />
-            {disabled ? 'Processando...' : 'Confirmar placar'}
+            {disabled ? 'Processando...' : submitLabel}
           </Button>
         </div>
       )}

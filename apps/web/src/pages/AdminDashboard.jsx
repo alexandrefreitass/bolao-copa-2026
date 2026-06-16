@@ -22,6 +22,7 @@ const AdminDashboard = () => {
   const [apostas, setApostas] = useState([]);
   const [logs, setLogs] = useState([]);
   const [solicitacoes, setSolicitacoes] = useState([]);
+  const [configBolao, setConfigBolao] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editField, setEditField] = useState('');
@@ -31,6 +32,9 @@ const AdminDashboard = () => {
   const [brasilScore, setBrasilScore] = useState('');
   const [marrocosScore, setMarrocosScore] = useState('');
   const [submittingPlacar, setSubmittingPlacar] = useState(false);
+  const [editingPlacarFinal, setEditingPlacarFinal] = useState(false);
+  const placarFinalLancado = Boolean(configBolao?.placar_final);
+  const placarSomenteLeitura = placarFinalLancado && !editingPlacarFinal;
 
   useEffect(() => {
     fetchData();
@@ -41,9 +45,10 @@ const AdminDashboard = () => {
       const apostasData = await pb.collection('apostas').getFullList({ sort: '-created', $autoCancel: false });
       setApostas(apostasData);
 
-      const [logsResult, solicitacoesResult] = await Promise.allSettled([
+      const [logsResult, solicitacoesResult, configResult] = await Promise.allSettled([
         pb.collection('logs').getFullList({ sort: '-created', $autoCancel: false }),
-        pb.collection('solicitacoes_exclusao').getFullList({ sort: '-created', $autoCancel: false })
+        pb.collection('solicitacoes_exclusao').getFullList({ sort: '-created', $autoCancel: false }),
+        pb.collection('configuracao_bolao').getFullList({ $autoCancel: false })
       ]);
 
       const adminRequests = [logsResult, solicitacoesResult];
@@ -66,6 +71,20 @@ const AdminDashboard = () => {
       } else {
         console.error('Error fetching deletion requests:', solicitacoesResult.reason);
         setSolicitacoes([]);
+      }
+
+      if (configResult.status === 'fulfilled') {
+        const nextConfig = configResult.value[0] || null;
+        setConfigBolao(nextConfig);
+
+        if (nextConfig?.placar_final && !editingPlacarFinal) {
+          const [brasil, marrocos] = nextConfig.placar_final.split('x').map((score) => score.trim());
+          setBrasilScore(brasil || '');
+          setMarrocosScore(marrocos || '');
+        }
+      } else {
+        console.error('Error fetching final score configuration:', configResult.reason);
+        setConfigBolao(null);
       }
 
       if (adminRequests.some((result) => result.status === 'rejected')) {
@@ -200,9 +219,11 @@ const AdminDashboard = () => {
       const existingConfig = await pb.collection('configuracao_bolao').getFullList({ $autoCancel: false });
       
       if (existingConfig.length > 0) {
-        await pb.collection('configuracao_bolao').update(existingConfig[0].id, configData, { $autoCancel: false });
+        const updatedConfig = await pb.collection('configuracao_bolao').update(existingConfig[0].id, configData, { $autoCancel: false });
+        setConfigBolao(updatedConfig);
       } else {
-        await pb.collection('configuracao_bolao').create(configData, { $autoCancel: false });
+        const createdConfig = await pb.collection('configuracao_bolao').create(configData, { $autoCancel: false });
+        setConfigBolao(createdConfig);
       }
 
       await pb.collection('logs').create({
@@ -211,8 +232,7 @@ const AdminDashboard = () => {
       }, { $autoCancel: false });
 
       toast.success(`Placar lançado! ${vencedores.length} vencedor(es) identificado(s)`);
-      setBrasilScore('');
-      setMarrocosScore('');
+      setEditingPlacarFinal(false);
       fetchData();
     } catch (error) {
       console.error('Error launching score:', error);
@@ -220,6 +240,10 @@ const AdminDashboard = () => {
     } finally {
       setSubmittingPlacar(false);
     }
+  };
+
+  const handleEditarPlacarFinal = () => {
+    setEditingPlacarFinal(true);
   };
 
   if (loading) {
@@ -281,8 +305,10 @@ const AdminDashboard = () => {
                 marrocosScore={marrocosScore}
                 onBrasilChange={setBrasilScore}
                 onMarrocosChange={setMarrocosScore}
-                onSubmit={handleLancarPlacar}
+                onSubmit={placarSomenteLeitura ? handleEditarPlacarFinal : handleLancarPlacar}
                 disabled={submittingPlacar}
+                readOnly={placarSomenteLeitura}
+                submitLabel={placarSomenteLeitura ? 'Editar placar' : 'Confirmar placar'}
               />
             </CardContent>
           </Card>
