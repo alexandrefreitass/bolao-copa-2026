@@ -198,12 +198,16 @@ const AdminDashboard = () => {
   };
 
   const handleLancarPlacar = async () => {
-    if (brasilScore === '' || marrocosScore === '') {
-      toast.error('Preencha o placar completo');
+    if (brasilScore === '' && marrocosScore === '') {
+      toast.error('Informe ao menos um placar');
       return;
     }
 
-    const placarFinal = `${brasilScore} x ${marrocosScore}`;
+    const normalizedBrasilScore = brasilScore === '' ? '0' : brasilScore;
+    const normalizedMarrocosScore = marrocosScore === '' ? '0' : marrocosScore;
+    const placarFinal = `${normalizedBrasilScore} x ${normalizedMarrocosScore}`;
+    setBrasilScore(normalizedBrasilScore);
+    setMarrocosScore(normalizedMarrocosScore);
     setSubmittingPlacar(true);
     
     try {

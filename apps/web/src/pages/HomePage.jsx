@@ -95,13 +95,17 @@ const HomePage = () => {
       return;
     }
 
-    if (brasilScore === '' || marrocosScore === '') {
-      toast.error('Preencha o placar completo');
+    if (brasilScore === '' && marrocosScore === '') {
+      toast.error('Informe ao menos um placar');
       setSubmitting(false);
       return;
     }
 
-    const placarFormatado = `${brasilScore} x ${marrocosScore}`;
+    const normalizedBrasilScore = brasilScore === '' ? '0' : brasilScore;
+    const normalizedMarrocosScore = marrocosScore === '' ? '0' : marrocosScore;
+    const placarFormatado = `${normalizedBrasilScore} x ${normalizedMarrocosScore}`;
+    setBrasilScore(normalizedBrasilScore);
+    setMarrocosScore(normalizedMarrocosScore);
 
     const normalizedName = formData.nome.trim().toLowerCase();
     const normalizedPhone = formData.telefone.trim();

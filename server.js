@@ -128,6 +128,25 @@ const readJson = async (request) => {
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 };
 
+const badRequest = (message) => Object.assign(new Error(message), { status: 400 });
+
+const normalizeScore = (value, fieldName) => {
+  const score = String(value ?? '').trim();
+  const match = score.match(/^(\d*)\s*x\s*(\d*)$/i);
+  if (!match) throw badRequest(`${fieldName} deve estar no formato "Brasil x Marrocos"`);
+
+  const [, brasilRaw, marrocosRaw] = match;
+  if (brasilRaw === '' && marrocosRaw === '') throw badRequest('Informe ao menos um placar');
+
+  const brasil = brasilRaw === '' ? 0 : Number(brasilRaw);
+  const marrocos = marrocosRaw === '' ? 0 : Number(marrocosRaw);
+  if (!Number.isInteger(brasil) || !Number.isInteger(marrocos) || brasil > 20 || marrocos > 20) {
+    throw badRequest('O placar deve ter valores inteiros entre 0 e 20');
+  }
+
+  return `${brasil} x ${marrocos}`;
+};
+
 const createToken = () => {
   const payload = Buffer.from(JSON.stringify({ email: adminEmail, exp: Date.now() + 1000 * 60 * 60 * 24 })).toString('base64url');
   const signature = createHmac('sha256', sessionSecret).update(payload).digest('base64url');
@@ -192,6 +211,10 @@ const createRecord = async (table, data) => {
     allowedFields[table].filter((field) => data[field] !== undefined).map((field) => [field, data[field]]),
   );
   if (table === 'apostas' && safeData.telefone === undefined) safeData.telefone = '';
+  if (table === 'apostas') safeData.placar = normalizeScore(safeData.placar, 'Placar');
+  if (table === 'configuracao_bolao' && safeData.placar_final !== undefined && safeData.placar_final !== null) {
+    safeData.placar_final = normalizeScore(safeData.placar_final, 'Placar final');
+  }
   const record = { id: id(), ...safeData, created: now(), updated: now() };
   if (table === 'configuracao_bolao') record.vencedores = JSON.stringify(record.vencedores || []);
   if (useMemoryDatabase) {
@@ -216,6 +239,10 @@ const updateRecord = async (table, recordId, data) => {
   const changes = Object.fromEntries(
     allowedFields[table].filter((field) => data[field] !== undefined).map((field) => [field, data[field]]),
   );
+  if (table === 'apostas' && changes.placar !== undefined) changes.placar = normalizeScore(changes.placar, 'Placar');
+  if (table === 'configuracao_bolao' && changes.placar_final !== undefined && changes.placar_final !== null) {
+    changes.placar_final = normalizeScore(changes.placar_final, 'Placar final');
+  }
   changes.updated = now();
   if (table === 'configuracao_bolao' && changes.vencedores) changes.vencedores = JSON.stringify(changes.vencedores);
   if (useMemoryDatabase) {
@@ -316,7 +343,10 @@ createServer(async (request, response) => {
     serveFrontend(request, response, url);
   } catch (error) {
     console.error(error);
-    if (!response.writableEnded) sendJson(response, 500, { message: 'Erro interno do servidor' });
+    if (!response.writableEnded) {
+      const status = Number.isInteger(error.status) ? error.status : 500;
+      sendJson(response, status, { message: status === 500 ? 'Erro interno do servidor' : error.message });
+    }
   }
 }).listen(port, '0.0.0.0', () => {
   console.log(`Aplicação disponível na porta ${port}`);

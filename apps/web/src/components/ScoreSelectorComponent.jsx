@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Check, Minus, Plus } from 'lucide-react';
 
-const ScoreControl = ({ label, abbreviation, score, onChange, disabled, team }) => {
+const ScoreControl = ({ label, abbreviation, score, onChange, onBlur, disabled, team }) => {
   const numericScore = score === '' ? 0 : Number(score);
   const isBrazil = team === 'brazil';
 
@@ -54,6 +54,7 @@ const ScoreControl = ({ label, abbreviation, score, onChange, disabled, team }) 
           maxLength={2}
           value={score}
           onChange={handleInput}
+          onBlur={onBlur}
           disabled={disabled}
           aria-label={`Placar do ${label}`}
           className="h-[46px] w-[46px] rounded-xl border-2 border-primary/15 bg-white text-center font-[Manrope] text-xl font-extrabold text-foreground shadow-[0_8px_24px_hsl(var(--primary)/0.08)] outline-none transition-all focus:border-primary/45 focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50 sm:h-[76px] sm:w-[76px] sm:rounded-2xl sm:text-3xl"
@@ -87,7 +88,15 @@ const ScoreSelectorComponent = ({
   submitLabel = 'Confirmar placar',
 }) => {
   const controlsDisabled = disabled || readOnly;
-  const isSubmitDisabled = disabled || brasilScore === '' || marrocosScore === '';
+  const isSubmitDisabled = disabled || (brasilScore === '' && marrocosScore === '');
+
+  const handleBrasilBlur = () => {
+    if (brasilScore === '' && marrocosScore !== '') onBrasilChange('0');
+  };
+
+  const handleMarrocosBlur = () => {
+    if (marrocosScore === '' && brasilScore !== '') onMarrocosChange('0');
+  };
 
   return (
     <div className="rounded-[1.25rem] border border-primary/10 bg-gradient-to-b from-white to-primary/[0.025] px-1.5 py-6 sm:px-8 sm:py-9">
@@ -98,6 +107,7 @@ const ScoreSelectorComponent = ({
           team="brazil"
           score={brasilScore}
           onChange={onBrasilChange}
+          onBlur={handleBrasilBlur}
           disabled={controlsDisabled}
         />
 
@@ -111,6 +121,7 @@ const ScoreSelectorComponent = ({
           team="morocco"
           score={marrocosScore}
           onChange={onMarrocosChange}
+          onBlur={handleMarrocosBlur}
           disabled={controlsDisabled}
         />
       </div>
