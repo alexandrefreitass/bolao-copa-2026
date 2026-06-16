@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import pb from '@/lib/apiClient';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import Footer from '@/components/Footer.jsx';
 import ScoreSelectorComponent from '@/components/ScoreSelectorComponent.jsx';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [apostas, setApostas] = useState([]);
   const [logs, setLogs] = useState([]);
   const [solicitacoes, setSolicitacoes] = useState([]);
@@ -36,17 +38,47 @@ const AdminDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [apostasData, logsData, solicitacoesData] = await Promise.all([
-        pb.collection('apostas').getFullList({ sort: '-created', $autoCancel: false }),
+      const apostasData = await pb.collection('apostas').getFullList({ sort: '-created', $autoCancel: false });
+      setApostas(apostasData);
+
+      const [logsResult, solicitacoesResult] = await Promise.allSettled([
         pb.collection('logs').getFullList({ sort: '-created', $autoCancel: false }),
         pb.collection('solicitacoes_exclusao').getFullList({ sort: '-created', $autoCancel: false })
       ]);
-      setApostas(apostasData);
-      setLogs(logsData);
-      setSolicitacoes(solicitacoesData);
+
+      const adminRequests = [logsResult, solicitacoesResult];
+      const unauthorized = adminRequests.some((result) => result.status === 'rejected' && result.reason?.status === 401);
+      if (unauthorized) {
+        toast.error('Sessao admin expirada. Entre novamente.');
+        navigate('/admin/login', { replace: true });
+        return;
+      }
+
+      if (logsResult.status === 'fulfilled') {
+        setLogs(logsResult.value);
+      } else {
+        console.error('Error fetching logs:', logsResult.reason);
+        setLogs([]);
+      }
+
+      if (solicitacoesResult.status === 'fulfilled') {
+        setSolicitacoes(solicitacoesResult.value);
+      } else {
+        console.error('Error fetching deletion requests:', solicitacoesResult.reason);
+        setSolicitacoes([]);
+      }
+
+      if (adminRequests.some((result) => result.status === 'rejected')) {
+        toast.error('Alguns dados administrativos nao foram carregados');
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Erro ao carregar dados');
+      if (error?.status === 401) {
+        toast.error('Sessao admin expirada. Entre novamente.');
+        navigate('/admin/login', { replace: true });
+      } else {
+        toast.error('Erro ao carregar dados');
+      }
     } finally {
       setLoading(false);
     }

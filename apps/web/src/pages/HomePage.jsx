@@ -185,6 +185,10 @@ const HomePage = () => {
   const totalAccumulated = apostas.reduce((sum, aposta) => {
     return sum + (aposta.valor || 10);
   }, 0);
+  const winnerCount = config?.vencedores?.length || 0;
+  const winnerPrizePerPerson = config?.placar_final && winnerCount > 0
+    ? totalAccumulated / winnerCount
+    : null;
 
   const groupedScores = apostas.reduce((acc, aposta) => {
     const score = aposta.placar;
@@ -309,6 +313,11 @@ const HomePage = () => {
                 <p className="text-xl font-semibold">{getWinnerDisplay()}</p>
                 {config && config.placar_final && (
                   <p className="text-sm text-muted-foreground mt-2">Placar final: {config.placar_final}</p>
+                )}
+                {winnerPrizePerPerson !== null && (
+                  <p className="text-sm font-semibold text-primary mt-2">
+                    Prêmio por pessoa: R$ {winnerPrizePerPerson.toFixed(2)}
+                  </p>
                 )}
               </CardContent>
             </Card>

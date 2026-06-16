@@ -1,15 +1,46 @@
 const STORAGE_KEY = 'bolao_admin_session';
 
+const readStoredSession = () => {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (!stored) return { token: '', model: null };
+
+  try {
+    const session = JSON.parse(stored);
+    return {
+      token: session?.token || '',
+      model: session?.model || null,
+    };
+  } catch {
+    return { token: stored, model: null };
+  }
+};
+
+const isTokenExpired = (token) => {
+  if (!token) return true;
+
+  try {
+    const [payload] = token.split('.');
+    const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedPayload = normalizedPayload.padEnd(normalizedPayload.length + (4 - normalizedPayload.length % 4) % 4, '=');
+    const data = JSON.parse(atob(paddedPayload));
+    return data.exp ? data.exp <= Date.now() : false;
+  } catch {
+    return false;
+  }
+};
+
+const storedSession = readStoredSession();
+
 const authStore = {
-  token: localStorage.getItem(STORAGE_KEY) || '',
-  model: null,
+  token: storedSession.token,
+  model: storedSession.model,
   get isValid() {
-    return Boolean(this.token);
+    return Boolean(this.token) && !isTokenExpired(this.token);
   },
   save(token, model) {
     this.token = token;
     this.model = model;
-    localStorage.setItem(STORAGE_KEY, token);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, model }));
   },
   clear() {
     this.token = '';
@@ -32,6 +63,7 @@ const request = async (path, options = {}) => {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
+    if (response.status === 401) authStore.clear();
     const error = new Error(data.message || 'Erro na requisição');
     error.status = response.status;
     throw error;
